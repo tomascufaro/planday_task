@@ -82,6 +82,32 @@ class TrialAnalytics:
         rates = {row.activity_detail: row.engaged_orgs / row.total_orgs for row in results}
         return rates
 
+    def goal_achievement_probability(self, goal, days):
+        with self.engine.connect() as conn:
+            query = text('''
+                WITH goal_achievements AS (
+                    SELECT organization_id,
+                           CASE 
+                               WHEN :goal = 'goal_shift_created' THEN goal_shift_created
+                               WHEN :goal = 'goal_employee_invited' THEN goal_employee_invited
+                               WHEN :goal = 'goal_punched_in' THEN goal_punched_in
+                               WHEN :goal = 'goal_punch_in_approved' THEN goal_punch_in_approved
+                               WHEN :goal = 'goal_advanced_features' THEN goal_advanced_features
+                               ELSE 0
+                           END AS achieved
+                    FROM trial_goals
+                )
+                SELECT AVG(CASE WHEN se.time_since_first_activity <= :days * 86400
+                                AND ga.achieved = 1 THEN 1.0 ELSE 0.0 END) AS probability
+                FROM staging_behavioral_events se
+                JOIN goal_achievements ga ON se.organization_id = ga.organization_id
+                WHERE se.timestamp = se.first_activity_timestamp
+            ''')
+            result = conn.execute(query, {'goal': goal, 'days': days}).fetchone()
+            probability = result[0] if result[0] is not None else 0
+
+        return probability
+
 # Example usage
 if __name__ == "__main__":
     analytics = TrialAnalytics()
@@ -96,3 +122,10 @@ if __name__ == "__main__":
     print("\nFeature Engagement Rates:")
     for feature, rate in analytics.feature_engagement_rate().items():
         print(f"  {feature}: {rate:.2%}")
+
+    print("\nGoal Achievement Probabilities (within 30 days):")
+    goals = ['goal_shift_created', 'goal_employee_invited', 'goal_punched_in', 
+             'goal_punch_in_approved', 'goal_advanced_features']
+    for goal in goals:
+        prob = analytics.goal_achievement_probability(goal, 120)
+        print(f"  {goal}: {prob:.2%}")

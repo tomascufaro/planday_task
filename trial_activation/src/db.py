@@ -22,21 +22,32 @@ with engine.connect() as conn:
     # Drop the existing table if it exists
     conn.execute(text('DROP TABLE IF EXISTS staging_behavioral_events'))
     
-    # Create the staging_behavioral_events table
+    # Create the staging_behavioral_events table with new columns
     conn.execute(text('''
         CREATE TABLE staging_behavioral_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organization_id TEXT NOT NULL,
             activity_name TEXT,
             activity_detail TEXT,
-            timestamp DATETIME NOT NULL
+            timestamp DATETIME NOT NULL,
+            first_activity_timestamp DATETIME NOT NULL,
+            time_since_first_activity INTERVAL
         )
     '''))
     
-    # Prepare and execute the INSERT statement
+    # Prepare and execute the INSERT statement with new columns
     insert_query = text('''
-        INSERT INTO staging_behavioral_events (organization_id, activity_name, activity_detail, timestamp)
-        SELECT organization_id, activity_name, activity_detail, timestamp
+        INSERT INTO staging_behavioral_events (
+            organization_id, activity_name, activity_detail, timestamp,
+            first_activity_timestamp, time_since_first_activity
+        )
+        SELECT 
+            organization_id, 
+            activity_name, 
+            activity_detail, 
+            timestamp,
+            FIRST_VALUE(timestamp) OVER (PARTITION BY organization_id ORDER BY timestamp) AS first_activity_timestamp,
+            CAST((JULIANDAY(timestamp) - JULIANDAY(FIRST_VALUE(timestamp) OVER (PARTITION BY organization_id ORDER BY timestamp))) * 86400 AS INTEGER) AS time_since_first_activity
         FROM behavioral_events
     ''')
     
@@ -108,13 +119,12 @@ with engine.connect() as conn:
     consistency_check = conn.execute(text('''
         SELECT 
             COUNT(DISTINCT se.organization_id) as staging_org_count,
-            COUNT(DISTINCT tg.organization_id) as trial_goals_org_count,
+            COUNT(DISTINCT tg.organization_id) as trial_goals_org_count
         FROM staging_behavioral_events se
         LEFT JOIN trial_goals tg ON se.organization_id = tg.organization_id
     ''')).fetchone()
     
     print("\nConsistency Check:")
-    print(f"organizations in behavioral_events: {len(data.ORGANIZATION_ID.unique())}")
     print(f"Organizations in Staging: {consistency_check.staging_org_count}")
     print(f"Organizations in Trial Goals: {consistency_check.trial_goals_org_count}")
 
