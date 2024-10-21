@@ -1,9 +1,13 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 from datetime import datetime
+import os
+
+# Get the path to the trial_activation directory
+db_path = 'trial_activation/trial_data.db'
 
 # Create a database connection
-engine = create_engine('sqlite:///trial_data.db')
+engine = create_engine(f'sqlite:///{db_path}')
 
 # Load the data into a DataFrame and set appropriate data types
 data = pd.read_csv('trial_activation/data/analytics_engineering_task.csv')
@@ -14,6 +18,7 @@ data['TIMESTAMP'] = pd.to_datetime(data['TIMESTAMP'])
 # Ensure organization_id is string (for UUID)
 data['ORGANIZATION_ID'] = data['ORGANIZATION_ID'].astype(str)
 print('Number of unique organizations in source data:', len(data.ORGANIZATION_ID.unique()))
+
 # Load the data into the database
 data.to_sql('behavioral_events', con=engine, if_exists='replace', index=False)
 

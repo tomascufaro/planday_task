@@ -1,10 +1,13 @@
 import pytest
 import pandas as pd
 from sqlalchemy import create_engine, text
+import os
 
 @pytest.fixture
 def db_connection():
-    engine = create_engine('sqlite:///trial_data.db')
+    # Get the path to the trial_activation director
+    
+    engine = create_engine(f'sqlite:///trial_activation/trial_data.db')
     with engine.connect() as conn:
         yield conn
 
