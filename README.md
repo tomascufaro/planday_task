@@ -102,3 +102,13 @@ To use this module:
 4. Call the desired methods to analyze your trial activation data.
 
 Example:
+
+```python
+pytest trial_activation/test/test_db_normalization.py
+python trial_activation/src/analytics.py
+python trial_activation/src/db.py
+```
+
+
+
+
