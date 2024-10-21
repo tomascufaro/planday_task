@@ -75,7 +75,7 @@ class TrialAnalytics:
                     (SELECT COUNT(DISTINCT organization_id) FROM staging_behavioral_events) AS total_orgs
                 FROM staging_behavioral_events
                 WHERE activity_name = 'Page.Viewed' 
-                  AND activity_detail IN ('revenue', 'integrations', 'absence', 'availability')
+                  AND activity_detail IN ('revenue', 'integrations-overview', 'absence-accounts', 'availability')
                 GROUP BY activity_detail
             ''')
             results = conn.execute(query).fetchall()
@@ -93,7 +93,7 @@ class TrialAnalytics:
                         MIN(CASE WHEN activity_name = 'Hr.Employee.Invited' THEN time_since_first_activity END) AS employee_invited_time,
                         MIN(CASE WHEN activity_name = 'PunchClock.PunchedIn' THEN time_since_first_activity END) AS punched_in_time,
                         MIN(CASE WHEN activity_name = 'PunchClock.Approvals.EntryApproved' THEN time_since_first_activity END) AS punch_approved_time,
-                        MIN(CASE WHEN activity_name = 'Page.Viewed' AND activity_detail IN ('revenue', 'integrations', 'absence', 'availability') THEN time_since_first_activity END) AS advanced_feature_time
+                        MIN(CASE WHEN activity_name = 'Page.Viewed' AND activity_detail IN ('revenue', 'integrations-overview', 'absence-accounts', 'availability') THEN time_since_first_activity END) AS advanced_feature_time
                     FROM staging_behavioral_events
                     GROUP BY organization_id
                 ),
@@ -104,7 +104,7 @@ class TrialAnalytics:
                         SUM(CASE WHEN activity_name = 'Hr.Employee.Invited' THEN 1 ELSE 0 END) AS employee_invited_count,
                         SUM(CASE WHEN activity_name = 'PunchClock.PunchedIn' THEN 1 ELSE 0 END) AS punched_in_count,
                         SUM(CASE WHEN activity_name = 'PunchClock.Approvals.EntryApproved' THEN 1 ELSE 0 END) AS punch_approved_count,
-                        SUM(CASE WHEN activity_name = 'Page.Viewed' AND activity_detail IN ('revenue', 'integrations', 'absence', 'availability') THEN 1 ELSE 0 END) AS advanced_feature_count
+                        SUM(CASE WHEN activity_name = 'Page.Viewed' AND activity_detail IN ('revenue', 'integrations-overview', 'absence-accounts', 'availability') THEN 1 ELSE 0 END) AS advanced_feature_count
                     FROM staging_behavioral_events
                     GROUP BY organization_id
                 )

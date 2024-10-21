@@ -103,7 +103,7 @@ with engine.connect() as conn:
             CASE WHEN SUM(CASE WHEN activity_name = 'Hr.Employee.Invited' THEN 1 ELSE 0 END) >= 1 THEN 1 ELSE 0 END,
             CASE WHEN SUM(CASE WHEN activity_name = 'PunchClock.PunchedIn' THEN 1 ELSE 0 END) >= 1 THEN 1 ELSE 0 END,
             CASE WHEN SUM(CASE WHEN activity_name = 'PunchClock.Approvals.EntryApproved' THEN 1 ELSE 0 END) >= 1 THEN 1 ELSE 0 END,
-            CASE WHEN SUM(CASE WHEN activity_name = 'Page.Viewed' AND activity_detail IN ('revenue', 'integrations', 'absence', 'availability') THEN 1 ELSE 0 END) >= 2 THEN 1 ELSE 0 END
+            CASE WHEN SUM(CASE WHEN activity_name = 'Page.Viewed' AND activity_detail IN ('revenue', 'integrations-overview', 'absence-accounts', 'availability') THEN 1 ELSE 0 END) >= 2 THEN 1 ELSE 0 END
         FROM staging_behavioral_events
         GROUP BY organization_id
     ''')
